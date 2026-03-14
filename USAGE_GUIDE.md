@@ -4,11 +4,11 @@
 
 Once you have the MCP server configured with Claude Desktop, you can interact with Jira tickets naturally. Here's how to use it for development:
 
-### Example: Analyzing Ticket NGSB-10435
+### Example: Analyzing Ticket XXXX-12345
 
 **Step 1: Get Ticket Details**
 ```
-Get all details for ticket NGSB-10435
+Get all details for ticket XXXX-12345
 ```
 
 The MCP server will fetch:
@@ -20,7 +20,7 @@ The MCP server will fetch:
 
 **Step 2: Analyze for Development**
 ```
-Analyze NGSB-10435 for development
+Analyze XXXX-12345 for development
 ```
 
 This provides:
@@ -34,24 +34,24 @@ This provides:
 
 Download test cases:
 ```
-Download the test case attachment from NGSB-10435
+Download the test case attachment from XXXX-12345
 ```
 
 View Figma designs:
 ```
-Show me the Figma links for NGSB-10435
+Show me the Figma links for XXXX-12345
 ```
 
 Get additional context:
 ```
-Show me all comments on NGSB-10435
+Show me all comments on XXXX-12345
 ```
 
 ## Workflow for Development
 
 ### 1. Understand Requirements
 ```
-Analyze ticket NGSB-10435 for development
+Analyze ticket XXXX-12345 for development
 ```
 
 ### 2. Review Design
@@ -62,7 +62,7 @@ The MCP server automatically extracts Figma links. You can then:
 
 ### 3. Review Test Cases
 ```
-Download the test case files from NGSB-10435
+Download the test case files from XXXX-12345
 ```
 
 Claude can help you:
@@ -73,29 +73,29 @@ Claude can help you:
 ### 4. Implement Code
 With all context available, you can ask Claude to:
 ```
-Based on ticket NGSB-10435, implement the feature following the Figma design and test cases
+Based on ticket XXXX-12345, implement the feature following the Figma design and test cases
 ```
 
 ### 5. Write Tests
 ```
-Write comprehensive tests for NGSB-10435 based on the test case file
+Write comprehensive tests for XXXX-12345 based on the test case file
 ```
 
 ## Advanced Usage
 
 ### Multi-Ticket Analysis
 ```
-Compare requirements for NGSB-10435 and NGSB-10436
+Compare requirements for XXXX-12345 and XXXX-12345
 ```
 
 ### Dependency Checking
 ```
-Get details for NGSB-10435 and check if there are any related tickets mentioned
+Get details for XXXX-12345 and check if there are any related tickets mentioned
 ```
 
 ### Documentation Generation
 ```
-Generate technical documentation for the implementation of NGSB-10435
+Generate technical documentation for the implementation of XXXX-12345
 ```
 
 ## Common Commands
@@ -120,16 +120,16 @@ Generate technical documentation for the implementation of NGSB-10435
 
 ### With Git Workflow
 ```
-1. Analyze ticket NGSB-10435
-2. Create a feature branch for NGSB-10435
+1. Analyze ticket XXXX-12345
+2. Create a feature branch for XXXX-12345
 3. Implement the feature based on the analysis
 4. Write tests according to test cases
-5. Commit with reference to NGSB-10435
+5. Commit with reference to XXXX-12345
 ```
 
 ## Tips for Best Results
 
-1. **Be Specific**: Use exact ticket IDs (e.g., NGSB-10435)
+1. **Be Specific**: Use exact ticket IDs (e.g., XXXX-12345)
 2. **Start with Analysis**: Always analyze before implementing
 3. **Review Resources**: Check Figma and test cases before coding
 4. **Iterative Approach**: Break large tickets into smaller tasks
@@ -156,7 +156,7 @@ The server looks for files with:
 ## Example Session
 
 ```
-You: Get details for NGSB-10435
+You: Get details for XXXX-12345
 
 Claude: [Fetches ticket details including description, attachments, Figma links, test cases]
 
