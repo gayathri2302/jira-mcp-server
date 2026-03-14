@@ -13,15 +13,20 @@ import { JiraConfig, JiraTicketDetails } from './types.js';
 dotenv.config();
 
 const config: JiraConfig = {
-  baseUrl: process.env.JIRA_BASE_URL || '',
-  email: process.env.JIRA_EMAIL || '',
-  apiToken: process.env.JIRA_API_TOKEN || '',
+  baseUrl: process.env.JIRA_BASE_URL || `https://${process.env.JIRA_HOST}` || '',
+  email: process.env.JIRA_EMAIL,
+  apiToken: process.env.JIRA_API_TOKEN,
+  username: process.env.JIRA_USERNAME,
+  password: process.env.JIRA_PASSWORD,
   projectKey: process.env.JIRA_PROJECT_KEY,
 };
 
-if (!config.baseUrl || !config.email || !config.apiToken) {
+const hasCloudAuth = config.baseUrl && config.email && config.apiToken;
+const hasServerAuth = config.baseUrl && config.username && config.password;
+
+if (!hasCloudAuth && !hasServerAuth) {
   console.error('Error: Missing required environment variables. Please check your .env file.');
-  console.error('Required: JIRA_BASE_URL, JIRA_EMAIL, JIRA_API_TOKEN');
+  console.error('Required: Either (JIRA_BASE_URL/JIRA_HOST + JIRA_EMAIL + JIRA_API_TOKEN) or (JIRA_BASE_URL/JIRA_HOST + JIRA_USERNAME + JIRA_PASSWORD)');
   process.exit(1);
 }
 

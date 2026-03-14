@@ -7,12 +7,14 @@ export class JiraClient {
 
   constructor(config: JiraConfig) {
     this.config = config;
+
+    const auth = config.username && config.password
+      ? { username: config.username, password: config.password }
+      : { username: config.email!, password: config.apiToken! };
+
     this.client = axios.create({
       baseURL: config.baseUrl,
-      auth: {
-        username: config.email,
-        password: config.apiToken,
-      },
+      auth,
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -22,7 +24,7 @@ export class JiraClient {
 
   async getTicketDetails(ticketId: string): Promise<JiraTicketDetails> {
     try {
-      const response = await this.client.get(`/rest/api/3/issue/${ticketId}`);
+      const response = await this.client.get(`/rest/api/2/issue/${ticketId}`);
       const issue = response.data;
 
       const attachments = await this.getAttachments(issue);
@@ -53,7 +55,7 @@ export class JiraClient {
 
   private async getAttachments(issue: any): Promise<JiraAttachment[]> {
     const attachments: JiraAttachment[] = [];
-    
+
     if (!issue.fields.attachment || issue.fields.attachment.length === 0) {
       return attachments;
     }
@@ -110,7 +112,7 @@ export class JiraClient {
 
   private extractTestCases(attachments: JiraAttachment[]): string[] {
     const testCaseFiles: string[] = [];
-    
+
     for (const att of attachments) {
       const filename = att.filename.toLowerCase();
       if (
@@ -147,7 +149,7 @@ export class JiraClient {
     }
 
     let text = '';
-    
+
     for (const node of adf.content) {
       if (node.type === 'paragraph' && node.content) {
         for (const contentNode of node.content) {
@@ -198,9 +200,9 @@ export class JiraClient {
 
   async getComments(ticketId: string): Promise<string[]> {
     try {
-      const response = await this.client.get(`/rest/api/3/issue/${ticketId}/comment`);
+      const response = await this.client.get(`/rest/api/2/issue/${ticketId}/comment`);
       const comments = response.data.comments || [];
-      
+
       return comments.map((comment: any) => {
         const author = comment.author?.displayName || 'Unknown';
         const body = this.parseDescription(comment.body);

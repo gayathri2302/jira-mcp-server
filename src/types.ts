@@ -1,7 +1,9 @@
 export interface JiraConfig {
   baseUrl: string;
-  email: string;
-  apiToken: string;
+  email?: string;
+  apiToken?: string;
+  username?: string;
+  password?: string;
   projectKey?: string;
 }
 
