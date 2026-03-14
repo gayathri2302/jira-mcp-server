@@ -1,0 +1,31 @@
+{
+  "name": "jira-mcp-server",
+  "version": "1.0.0",
+  "description": "MCP server for Jira ticket integration with automatic code generation",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "prepare": "npm run build",
+    "watch": "tsc --watch",
+    "dev": "node --loader ts-node/esm src/index.ts"
+  },
+  "keywords": [
+    "mcp",
+    "jira",
+    "automation",
+    "code-generation"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^0.5.0",
+    "axios": "^1.6.0",
+    "dotenv": "^16.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.3.0",
+    "ts-node": "^10.9.0"
+  }
+}
