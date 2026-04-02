@@ -198,6 +198,108 @@ export class JiraClient {
     return text;
   }
 
+  async getTransitions(ticketId: string): Promise<{ id: string; name: string }[]> {
+    try {
+      const response = await this.client.get(`/rest/api/2/issue/${ticketId}/transitions`);
+      return (response.data.transitions || []).map((t: any) => ({
+        id: t.id,
+        name: t.name,
+      }));
+    } catch (error: any) {
+      throw new Error(`Failed to get transitions for ${ticketId}: ${error.message}`);
+    }
+  }
+
+  async transitionIssue(
+    ticketId: string,
+    targetStatus: string
+  ): Promise<{ ticketId: string; previousStatus: string; newStatus: string; success: boolean; error?: string }> {
+    try {
+      const issueRes = await this.client.get(`/rest/api/2/issue/${ticketId}`, {
+        params: { fields: 'status' },
+      });
+      const previousStatus = issueRes.data.fields.status?.name || 'Unknown';
+
+      if (previousStatus.toLowerCase() === targetStatus.toLowerCase()) {
+        return { ticketId, previousStatus, newStatus: targetStatus, success: true };
+      }
+
+      const transitions = await this.getTransitions(ticketId);
+      const match = transitions.find(
+        (t) => t.name.toLowerCase() === targetStatus.toLowerCase()
+      );
+
+      if (!match) {
+        const available = transitions.map((t) => t.name).join(', ');
+        return {
+          ticketId, previousStatus, newStatus: targetStatus, success: false,
+          error: `No transition to "${targetStatus}". Available: [${available}]`,
+        };
+      }
+
+      await this.client.post(`/rest/api/2/issue/${ticketId}/transitions`, {
+        transition: { id: match.id },
+      });
+
+      return { ticketId, previousStatus, newStatus: targetStatus, success: true };
+    } catch (error: any) {
+      return {
+        ticketId, previousStatus: 'Unknown', newStatus: targetStatus,
+        success: false, error: error.message,
+      };
+    }
+  }
+
+  async getEpicIssues(epicKey: string): Promise<{ key: string; summary: string; status: string; issueType: string }[]> {
+    try {
+      const jql = `"Epic Link" = ${epicKey} OR parent = ${epicKey}`;
+      const response = await this.client.get('/rest/api/2/search', {
+        params: { jql, fields: 'summary,status,issuetype', maxResults: 200 },
+      });
+
+      return (response.data.issues || []).map((issue: any) => ({
+        key: issue.key,
+        summary: issue.fields.summary || '',
+        status: issue.fields.status?.name || 'Unknown',
+        issueType: issue.fields.issuetype?.name || 'Unknown',
+      }));
+    } catch (error: any) {
+      throw new Error(`Failed to fetch issues for epic ${epicKey}: ${error.message}`);
+    }
+  }
+
+  async transitionEpicIssues(
+    epicKey: string,
+    targetStatus: string
+  ): Promise<{ epic: string; targetStatus: string; totalIssues: number; results: any[] }> {
+    const issues = await this.getEpicIssues(epicKey);
+
+    if (issues.length === 0) {
+      return { epic: epicKey, targetStatus, totalIssues: 0, results: [] };
+    }
+
+    const results = [];
+    for (const issue of issues) {
+      const result = await this.transitionIssue(issue.key, targetStatus);
+      results.push(result);
+    }
+
+    return { epic: epicKey, targetStatus, totalIssues: issues.length, results };
+  }
+
+  async transitionMultipleIssues(
+    ticketIds: string[],
+    targetStatus: string
+  ): Promise<{ targetStatus: string; totalIssues: number; results: any[] }> {
+    const results = [];
+    for (const ticketId of ticketIds) {
+      const result = await this.transitionIssue(ticketId, targetStatus);
+      results.push(result);
+    }
+
+    return { targetStatus, totalIssues: ticketIds.length, results };
+  }
+
   async getComments(ticketId: string): Promise<string[]> {
     try {
       const response = await this.client.get(`/rest/api/2/issue/${ticketId}/comment`);

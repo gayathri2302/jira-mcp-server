@@ -101,6 +101,57 @@ const tools: Tool[] = [
       required: ['ticket_id'],
     },
   },
+  {
+    name: 'transition_epic_issues',
+    description: 'Move ALL tickets under an epic to a target status. Provide the epic key and the desired status name. Each ticket will be transitioned individually and results reported.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        epic_key: {
+          type: 'string',
+          description: 'The epic ticket key (e.g., XXXX-1234)',
+        },
+        target_status: {
+          type: 'string',
+          description: 'The target status to move all tickets to (e.g., "In Progress", "Done", "To Do", "QA Ready")',
+        },
+      },
+      required: ['epic_key', 'target_status'],
+    },
+  },
+  {
+    name: 'transition_tickets',
+    description: 'Move one or more specific tickets to a target status. Provide an array of ticket keys and the desired status name.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        ticket_ids: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Array of ticket keys to transition (e.g., ["XXXX-101", "XXXX-102"])',
+        },
+        target_status: {
+          type: 'string',
+          description: 'The target status to move tickets to (e.g., "In Progress", "Done", "To Do", "QA Ready")',
+        },
+      },
+      required: ['ticket_ids', 'target_status'],
+    },
+  },
+  {
+    name: 'get_available_transitions',
+    description: 'Get the list of available status transitions for a ticket. Useful to see what statuses a ticket can be moved to.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        ticket_id: {
+          type: 'string',
+          description: 'The Jira ticket ID (e.g., NGSB-1234)',
+        },
+      },
+      required: ['ticket_id'],
+    },
+  },
 ];
 
 server.setRequestHandler(ListToolsRequestSchema, async () => {
@@ -173,6 +224,76 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             },
           ],
         };
+      }
+
+      case 'transition_epic_issues': {
+        const epicKey = args.epic_key as string;
+        const targetStatus = args.target_status as string;
+        const result = await jiraClient.transitionEpicIssues(epicKey, targetStatus);
+
+        const succeeded = result.results.filter((r) => r.success).length;
+        const failed = result.results.filter((r) => !r.success).length;
+
+        let output = `# Epic Status Transition: ${epicKey}\n\n`;
+        output += `**Target Status:** ${targetStatus}\n`;
+        output += `**Total Issues:** ${result.totalIssues}\n`;
+        output += `**Succeeded:** ${succeeded}\n`;
+        output += `**Failed:** ${failed}\n\n`;
+
+        if (result.totalIssues === 0) {
+          output += `No issues found under epic ${epicKey}.\n`;
+        } else {
+          output += `## Results\n\n`;
+          for (const r of result.results) {
+            const icon = r.success ? '✅' : '❌';
+            output += `${icon} **${r.ticketId}**: ${r.previousStatus} → ${r.newStatus}`;
+            if (r.error) output += ` (${r.error})`;
+            output += '\n';
+          }
+        }
+
+        return { content: [{ type: 'text', text: output }] };
+      }
+
+      case 'transition_tickets': {
+        const ticketIds = args.ticket_ids as string[];
+        const targetStatus = args.target_status as string;
+        const result = await jiraClient.transitionMultipleIssues(ticketIds, targetStatus);
+
+        const succeeded = result.results.filter((r) => r.success).length;
+        const failed = result.results.filter((r) => !r.success).length;
+
+        let output = `# Bulk Ticket Status Transition\n\n`;
+        output += `**Target Status:** ${targetStatus}\n`;
+        output += `**Total Tickets:** ${result.totalIssues}\n`;
+        output += `**Succeeded:** ${succeeded}\n`;
+        output += `**Failed:** ${failed}\n\n`;
+
+        output += `## Results\n\n`;
+        for (const r of result.results) {
+          const icon = r.success ? '✅' : '❌';
+          output += `${icon} **${r.ticketId}**: ${r.previousStatus} → ${r.newStatus}`;
+          if (r.error) output += ` (${r.error})`;
+          output += '\n';
+        }
+
+        return { content: [{ type: 'text', text: output }] };
+      }
+
+      case 'get_available_transitions': {
+        const ticketId = args.ticket_id as string;
+        const transitions = await jiraClient.getTransitions(ticketId);
+
+        let output = `# Available Transitions for ${ticketId}\n\n`;
+        if (transitions.length === 0) {
+          output += 'No transitions available for this ticket.\n';
+        } else {
+          for (const t of transitions) {
+            output += `- **${t.name}** (ID: ${t.id})\n`;
+          }
+        }
+
+        return { content: [{ type: 'text', text: output }] };
       }
 
       default:
