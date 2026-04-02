@@ -4,7 +4,7 @@ import { spawn } from 'child_process';
 
 async function runDemo() {
   console.log('🚀 Starting Jira MCP Server Demo\n');
-  
+
   const serverProcess = spawn('node', ['dist/index.js'], {
     cwd: process.cwd(),
     env: process.env,
@@ -38,7 +38,7 @@ async function runDemo() {
   console.log('\n');
 
   console.log('🎫 Testing with ticket NGSB-10435...\n');
-  
+
   try {
     console.log('📥 Fetching ticket details...\n');
     const result = await client.callTool({
@@ -56,13 +56,13 @@ async function runDemo() {
     const analysisResult = await client.callTool({
       name: 'analyze_ticket_for_development',
       arguments: {
-        ticket_id: 'NGSB-10435',
+        ticket_id: 'XXXXX-10435',
       },
     });
 
     console.log('✅ Development Analysis:\n');
     console.log(analysisResult.content[0].text);
-    
+
   } catch (error) {
     console.error('❌ Error:', error.message);
     if (error.response) {

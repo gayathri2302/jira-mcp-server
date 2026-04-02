@@ -5,6 +5,7 @@ export interface JiraConfig {
   username?: string;
   password?: string;
   projectKey?: string;
+  targetUser?: string;
 }
 
 export interface JiraAttachment {

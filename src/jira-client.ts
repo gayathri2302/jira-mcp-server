@@ -300,6 +300,63 @@ export class JiraClient {
     return { targetStatus, totalIssues: ticketIds.length, results };
   }
 
+  async assignIssue(
+    ticketId: string,
+    targetAssignee: string
+  ): Promise<{ ticketId: string; newAssignee: string; success: boolean; error?: string }> {
+    try {
+      const payload = this.config.username 
+        ? { name: targetAssignee } 
+        : { accountId: targetAssignee };
+
+      await this.client.put(`/rest/api/2/issue/${ticketId}/assignee`, payload);
+
+      return { ticketId, newAssignee: targetAssignee, success: true };
+    } catch (error: any) {
+      return {
+        ticketId,
+        newAssignee: targetAssignee,
+        success: false, 
+        error: error.message,
+      };
+    }
+  }
+
+  async assignEpicIssuesByStatus(
+    epicKey: string,
+    targetStatus: string,
+    targetAssignee: string
+  ): Promise<{ epic: string; targetStatus: string; targetAssignee: string; totalIssues: number; results: any[] }> {
+    const issues = await this.getEpicIssues(epicKey);
+
+    const filteredIssues = issues.filter(issue => issue.status.toLowerCase() === targetStatus.toLowerCase());
+
+    if (filteredIssues.length === 0) {
+      return { epic: epicKey, targetStatus, targetAssignee, totalIssues: 0, results: [] };
+    }
+
+    const results = [];
+    for (const issue of filteredIssues) {
+      const result = await this.assignIssue(issue.key, targetAssignee);
+      results.push(result);
+    }
+
+    return { epic: epicKey, targetStatus, targetAssignee, totalIssues: filteredIssues.length, results };
+  }
+
+  async assignMultipleIssues(
+    ticketIds: string[],
+    targetAssignee: string
+  ): Promise<{ targetAssignee: string; totalIssues: number; results: any[] }> {
+    const results = [];
+    for (const ticketId of ticketIds) {
+      const result = await this.assignIssue(ticketId, targetAssignee);
+      results.push(result);
+    }
+
+    return { targetAssignee, totalIssues: ticketIds.length, results };
+  }
+
   async getComments(ticketId: string): Promise<string[]> {
     try {
       const response = await this.client.get(`/rest/api/2/issue/${ticketId}/comment`);

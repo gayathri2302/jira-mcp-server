@@ -9,14 +9,14 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 async function runEpicSync() {
   console.log('🚀 Starting Epic Status Transition\n');
 
-  const serverProcess = spawn('node', [path.join(__dirname, 'dist', 'index.js')], {
+  const serverProcess = spawn('node', ['--loader', 'ts-node/esm', path.join(__dirname, 'src', 'index.ts')], {
     cwd: __dirname,
     env: process.env,
   });
 
   const transport = new StdioClientTransport({
     command: 'node',
-    args: [path.join(__dirname, 'dist', 'index.js')],
+    args: ['--loader', 'ts-node/esm', path.join(__dirname, 'src', 'index.ts')],
     env: process.env,
   });
 
@@ -34,14 +34,18 @@ async function runEpicSync() {
   console.log('✅ Connected to MCP server');
 
   try {
-    console.log('📥 Calling transition_epic_issues for XXXX-10316...\n');
+    console.log('📥 Calling assign_epic_issues_by_status for NGSB-10316...\n');
     const result = await client.callTool({
-      name: 'transition_tickets',
+      // name: 'transition_tickets',
+      name: 'assign_epic_issues_by_status',
       // name: 'transition_epic_issues',
       arguments: {
-        // epic_id: 'XXXX-10316',
-        ticket_ids: ['XXXX-10368'],
-        target_status: 'CR Pass'
+        // epic_id: 'NGSB-10318',
+        // ticket_ids: ['XXXX-10368'],
+        // target_status: 'CR Pass',
+        epic_key: 'XXXX-10318',
+        // ticket_ids: ['NGSB-10368'],
+        target_status: "Ready For Deployment"
       },
     });
 

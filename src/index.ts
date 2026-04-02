@@ -19,6 +19,7 @@ const config: JiraConfig = {
   username: process.env.JIRA_USERNAME,
   password: process.env.JIRA_PASSWORD,
   projectKey: process.env.JIRA_PROJECT_KEY,
+  targetUser: process.env.JIRA_TARGET_USER,
 };
 
 const hasCloudAuth = config.baseUrl && config.email && config.apiToken;
@@ -136,6 +137,39 @@ const tools: Tool[] = [
         },
       },
       required: ['ticket_ids', 'target_status'],
+    },
+  },
+  {
+    name: 'assign_epic_issues_by_status',
+    description: 'Assign all tickets under an epic to the target user specified in environment variables, filtered by ticket status.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        epic_key: {
+          type: 'string',
+          description: 'The epic ticket key (e.g., NGSB-1234)',
+        },
+        target_status: {
+          type: 'string',
+          description: 'The status filter to apply (e.g., "Ready for Deployment")',
+        },
+      },
+      required: ['epic_key', 'target_status'],
+    },
+  },
+  {
+    name: 'assign_tickets',
+    description: 'Assign specific tickets to the target user specified in environment variables.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        ticket_ids: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Array of ticket keys (e.g., ["NGSB-101"])',
+        },
+      },
+      required: ['ticket_ids'],
     },
   },
   {
@@ -277,6 +311,56 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           output += '\n';
         }
 
+        return { content: [{ type: 'text', text: output }] };
+      }
+
+      case 'assign_epic_issues_by_status': {
+        const epicKey = args.epic_key as string;
+        const targetStatus = args.target_status as string;
+        if (!config.targetUser) throw new Error("JIRA_TARGET_USER is not defined in environment variables");
+
+        const result = await jiraClient.assignEpicIssuesByStatus(epicKey, targetStatus, config.targetUser);
+
+        let output = `# Epic Status Assignment: ${epicKey}\n\n`;
+        output += `**Filtered Status:** ${targetStatus}\n`;
+        output += `**Target Assignee:** ${config.targetUser}\n`;
+        output += `**Total Issues Segmented:** ${result.totalIssues}\n`;
+        const succeeded = result.results.filter((r: any) => r.success).length;
+        const failed = result.results.filter((r: any) => !r.success).length;
+        output += `**Succeeded:** ${succeeded}\n**Failed:** ${failed}\n\n`;
+
+        if (result.results.length > 0) {
+          output += `## Results\n\n`;
+          for (const r of result.results) {
+            const icon = r.success ? '✅' : '❌';
+            output += `${icon} **${r.ticketId}**: Assigned to ${r.newAssignee}`;
+            if (r.error) output += ` (${r.error})`;
+            output += '\n';
+          }
+        }
+        return { content: [{ type: 'text', text: output }] };
+      }
+
+      case 'assign_tickets': {
+        const ticketIds = args.ticket_ids as string[];
+        if (!config.targetUser) throw new Error("JIRA_TARGET_USER is not defined in environment variables");
+
+        const result = await jiraClient.assignMultipleIssues(ticketIds, config.targetUser);
+
+        let output = `# Bulk Ticket Assignment\n\n`;
+        output += `**Target Assignee:** ${config.targetUser}\n`;
+        output += `**Total Tickets:** ${result.totalIssues}\n`;
+        const succeeded = result.results.filter((r: any) => r.success).length;
+        const failed = result.results.filter((r: any) => !r.success).length;
+        output += `**Succeeded:** ${succeeded}\n**Failed:** ${failed}\n\n`;
+
+        output += `## Results\n\n`;
+        for (const r of result.results) {
+          const icon = r.success ? '✅' : '❌';
+          output += `${icon} **${r.ticketId}**: Assigned to ${r.newAssignee}`;
+          if (r.error) output += ` (${r.error})`;
+          output += '\n';
+        }
         return { content: [{ type: 'text', text: output }] };
       }
 
